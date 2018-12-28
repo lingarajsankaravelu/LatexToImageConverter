@@ -1,0 +1,25 @@
+from PIL import Image
+from os import listdir
+from os.path import splitext
+target = '.jpg'
+source = '.png'
+size = 10,10
+sourceDirectory = '/Users/lingaraj/Desktop/questionRenders/'
+targetDirectory = '/Users/lingaraj/Desktop/questionRendersJPeg/'
+
+#Converts PNG to JPEG from respective source to destination directory
+def convertPngToJPEG():
+    for file in listdir(sourceDirectory):
+        filename, extension = splitext(file)
+        try:
+            if extension == source:
+                im = Image.open(sourceDirectory+filename+extension)
+                im = im.convert("RGB")
+                #im.thumbnail(size,Image.ANTIALIAS)
+                im.save(targetDirectory+filename + target)
+                print('Convert success:', filename)
+        except OSError:
+            print('Cannot convert %s' % file)
+pass
+if __name__ == '__main__':
+    convertPngToJPEG()

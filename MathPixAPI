@@ -1,0 +1,49 @@
+import  requests
+import sys
+import base64
+import requests
+import json
+import pymongo
+from  os.path import splitext
+from  os import  listdir
+targetextension = '.jpg'
+base_url ='https://api.mathpix.com/v3/latex'
+targetDirectory = '/Users/lingaraj/Desktop/questionRendersJPeg/'
+mongo_connection = pymongo.MongoClient("mongodb://localhost")
+db = mongo_connection.mathpix
+questions = db['questions']
+static_file_name = '5a4f5b65bb6527ab61aa6bcc'
+
+# Makes Synchronous request to MathPixAPI with the images one by one and  updated mongoDB
+def contactMathPix(fileName):
+    print('Math Pix Request created for',fileName)
+    file_path = targetDirectory+fileName+targetextension
+    image_uri = "data:image/jpg;base64," + base64.b64encode(open(file_path, "rb").read())
+    request = requests.post(base_url,
+                      data=json.dumps({'src': image_uri,'ocr':['math','text'],
+                                       'formats': ['latex_normal', 'latex_styled']}),
+                      headers={"app_id": "mathpix", "app_key": "139ee4b61be2e4abcfb1238d9eb99902",
+                               "Content-type": "application/json"})
+    respons_dict = json.loads(request.text)
+    json_dump =  json.dumps(json.loads(request.text), indent=4, sort_keys=True)
+    print(json_dump)
+    pass
+
+
+def readDirectory():
+    count = 0
+    for file in listdir(targetDirectory):
+        filename, extension = splitext(file)
+        if extension==targetextension:
+            cursor = questions.find_one({'questionId':filename})
+            if cursor is None:
+                print("UnResolved QuestionId:",filename)
+            else:
+                if filename==static_file_name:
+                    contactMathPix(filename)
+        count = count + 1
+
+pass
+
+if __name__ == '__main__':
+    readDirectory()

@@ -1,0 +1,85 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+import pymongo
+import  matplotlib
+matplotlib.use('TkAgg')
+import pylab
+import matplotlib.pyplot as plt
+mongo_connection = pymongo.MongoClient("mongodb://localhost")
+db = mongo_connection.mathpix
+questions = db['questions']
+errors =db['errors']
+direcotry = '/Users/lingaraj/Desktop/questionRenders/'
+
+#questionText -> A combination of latex and questiontext which needs to be converted and saved as an Image
+def renderAndSaveFileUsingPyLab(questionId,questionText):
+    fig = pylab.figure()
+    text = fig.text(0, 0, questionText)
+
+    # Saving the figure will render the text.
+    dpi = 300
+    #fig.savefig('formula.png', dpi=dpi)
+
+    # Now we can work with text's bounding box.
+    bbox = text.get_window_extent()
+    width, height = bbox.size / float(dpi) + 0.005
+    # Adjust the figure size so it can hold the entire text.
+    fig.set_size_inches((width, height))
+
+    # Adjust text's vertical position.
+    dy = (bbox.ymin / float(dpi)) / height
+    text.set_position((0, -dy))
+
+    # Save the adjusted text.
+    fig.savefig(direcotry+questionId+'.png', dpi=dpi)
+    pass
+
+
+def renderAndSaveFile(questionId,questionText):
+    plt.title(questionText,fontsize=20)
+    #plt.text(questionText)
+    plt.box(on=False)
+    #plt.text(10, 10, questionText, fontsize=8)
+    ax = plt.gca()
+    ax.axes.get_xaxis().set_visible(False)
+    ax.axes.get_yaxis().set_visible(False)
+    plt.draw()
+    plt.savefig(direcotry+questionId+'.png',dpi=900)
+    pass
+
+
+def updateError(question_id):
+    try:
+        cursor = errors.find_one({'questionId',question_id})
+        if cursor is None:
+            errors.insert_one({'questionId',question_id})
+            print('Question Id marked as error:',question_id)
+    except Exception as e:
+        print('problem inserting errors',type(e),e)
+    pass
+
+
+def readAndRenderQuestionsCollection():
+    try:
+        cursor = questions.find({})
+        errorIds = []
+        count = 1
+        for doc in cursor:
+            print ('processing record',count)
+            question_id = doc['questionId']
+            try:
+                question_text = doc['questionText']
+                renderAndSaveFileUsingPyLab(question_id,question_text)
+            except Exception as e:
+                updateError(question_id)
+                errorIds.append(question_id)
+                print('Problem with Question Text',type(e),e)
+
+            #renderAndSaveFile(question_id,question_text)
+            count = count + 1
+    except Exception as e:
+        print('Error reading data from collection:',type(e),e)
+    pass
+
+if __name__ == '__main__':
+    readAndRenderQuestionsCollection()
