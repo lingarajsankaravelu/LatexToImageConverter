@@ -18,7 +18,7 @@ def renderAndSaveFileUsingPyLab(questionId,questionText):
 
     # Saving the figure will render the text.
     dpi = 300
-    #fig.savefig('formula.png', dpi=dpi)
+    fig.savefig('formula.png', dpi=dpi)
 
     # Now we can work with text's bounding box.
     bbox = text.get_window_extent()
